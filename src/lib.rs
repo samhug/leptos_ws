@@ -132,6 +132,7 @@ impl ServerSignalWebSocket {
                         initial_connection.set(false);
                     }
                 })
+                .reconnect_limit(leptos_use::ReconnectLimit::Infinite)
                 .immediate(false),
         );
 
