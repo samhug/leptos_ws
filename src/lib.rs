@@ -108,7 +108,7 @@ impl ServerSignalWebSocket {
         }
         Ok(())
     }
-    pub fn new(url: &str, options: UseWebSocketOptions) -> Self {
+    pub fn new(url: &str) -> Self {
         let delayed_msgs = Arc::default();
         let state_signals = ClientSignals::new();
         let initial_connection = RwSignal::new(true);
@@ -120,7 +120,7 @@ impl ServerSignalWebSocket {
             ..
         } = use_websocket_with_options::<Messages, Messages, JsonSerdeCodec, _, _>(
             url,
-            options
+            UseWebSocketOptions::default()
                 .on_message(Self::handle_message(state_signals.clone()))
                 .on_open({
                     let signals = state_signals.clone();
@@ -134,6 +134,7 @@ impl ServerSignalWebSocket {
                 })
                 .immediate(false),
         );
+
         let ws_client = Self {
             ready_state: ready_state.clone(),
             send: Arc::new(send),
@@ -194,16 +195,16 @@ impl ServerSignalWebSocket {
 
 #[cfg(not(feature = "ssr"))]
 #[inline]
-fn provide_websocket_inner(url: &str, options: UseWebSocketOptions) -> Option<()> {
+fn provide_websocket_inner(url: &str) -> Option<()> {
     if let None = use_context::<ServerSignalWebSocket>() {
-        provide_context(ServerSignalWebSocket::new(url, options));
+        provide_context(ServerSignalWebSocket::new(url));
     }
     Some(())
 }
 
 #[cfg(feature = "ssr")]
 #[inline]
-fn provide_websocket_inner(_url: &str, _options: UseWebSocketOptions) -> Option<()> {
+fn provide_websocket_inner(_url: &str) -> Option<()> {
     None
 }
 /// Establishes and provides a WebSocket connection for server signals.
@@ -251,9 +252,5 @@ fn provide_websocket_inner(_url: &str, _options: UseWebSocketOptions) -> Option<
 /// This function should be called in the root component of your Leptos application
 /// to ensure the WebSocket connection is available throughout the app.
 pub fn provide_websocket(url: &str) -> Option<()> {
-    provide_websocket_with_options(url, UseWebSocketOptions::default())
-}
-
-pub fn provide_websocket_with_options(url: &str, options: UseWebSocketOptions) -> Option<()> {
-    provide_websocket_inner(url, options)
+    provide_websocket_inner(url)
 }
